@@ -16,15 +16,15 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as cdk from '@aws-cdk/core';
-import * as ec2 from '@aws-cdk/aws-ec2';
-import {EbsDeviceVolumeType} from '@aws-cdk/aws-ec2';
-import * as iam from '@aws-cdk/aws-iam';
+import * as cdk from 'aws-cdk-lib';
+import { Construct } from "constructs";
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import {JenkinsStack} from "./jenkins-cdk-stack";
 
 export class JenkinsMacAgentStack extends cdk.Stack {
 
-    constructor(scope: cdk.Construct, id: string, jenkins: JenkinsStack, props?: cdk.StackProps) {
+    constructor(scope: Construct, id: string, jenkins: JenkinsStack, props?: cdk.StackProps) {
         super(scope, id, props);
 
         const macdata = ec2.UserData.custom(`#!/bin/zsh
@@ -59,7 +59,7 @@ diskutil apfs resizeContainer $APFSCONT 0
         const mac = new ec2.Instance(this, 'mac-instance', {
             vpc: jenkins.vpc,
             vpcSubnets: jenkins.vpc.selectSubnets({
-                subnetType: ec2.SubnetType.PRIVATE,
+                subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
                 availabilityZones: [this.node.tryGetContext("hostaz")],
             }),
             instanceType: new ec2.InstanceType('mac1.metal'),
@@ -71,7 +71,7 @@ diskutil apfs resizeContainer $APFSCONT 0
             userData: macdata,
             blockDevices: [{
                 deviceName: "/dev/sda1",
-                volume: ec2.BlockDeviceVolume.ebs(128, {volumeType: EbsDeviceVolumeType.GP3}),
+                volume: ec2.BlockDeviceVolume.ebs(128, {volumeType: ec2.EbsDeviceVolumeType.GP3}),
             }]
         })
 

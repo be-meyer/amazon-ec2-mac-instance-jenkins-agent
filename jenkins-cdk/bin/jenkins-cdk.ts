@@ -18,7 +18,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 import 'source-map-support/register';
-import * as cdk from '@aws-cdk/core';
+import * as cdk from 'aws-cdk-lib';
 import {JenkinsStack} from '../lib/jenkins-cdk-stack';
 import {JenkinsMacAgentStack} from "../lib/jenkins-agent-stack";
 

@@ -16,23 +16,22 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as cdk from '@aws-cdk/core';
-import * as ec2 from '@aws-cdk/aws-ec2';
-import {AmazonLinuxEdition, AmazonLinuxGeneration} from '@aws-cdk/aws-ec2';
-import * as elbv2 from '@aws-cdk/aws-elasticloadbalancingv2';
-import * as autoscaling from '@aws-cdk/aws-autoscaling';
-import {EbsDeviceVolumeType} from '@aws-cdk/aws-autoscaling';
-import * as iam from '@aws-cdk/aws-iam';
+import * as cdk from 'aws-cdk-lib';
+import { Construct } from "constructs";
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
+import * as autoscaling from 'aws-cdk-lib/aws-autoscaling';
+import * as iam from 'aws-cdk-lib/aws-iam';
 
 export class JenkinsStack extends cdk.Stack {
     readonly vpc: ec2.Vpc;
     readonly jenkins_sg: ec2.SecurityGroup;
 
-    constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+    constructor(scope: Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
 
         this.vpc = new ec2.Vpc(this, 'mac-vpc', {
-            cidr: "10.0.0.0/16",
+            ipAddresses: ec2.IpAddresses.cidr("10.0.0.0/16"),
             maxAzs: 99,
         });
 
@@ -70,8 +69,8 @@ systemctl status jenkins
             vpc: this.vpc,
             instanceType: ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE3, ec2.InstanceSize.MEDIUM),
             machineImage: new ec2.AmazonLinuxImage({
-                edition: AmazonLinuxEdition.STANDARD,
-                generation: AmazonLinuxGeneration.AMAZON_LINUX_2
+                edition: ec2.AmazonLinuxEdition.STANDARD,
+                generation: ec2.AmazonLinuxGeneration.AMAZON_LINUX_2
             }),
             maxCapacity: 1,
             minCapacity: 1,
@@ -80,7 +79,7 @@ systemctl status jenkins
             securityGroup: this.jenkins_sg,
             blockDevices: [{
                 deviceName: "/dev/xvda",
-                volume: autoscaling.BlockDeviceVolume.ebs(32, {volumeType: EbsDeviceVolumeType.GP2}),
+                volume: autoscaling.BlockDeviceVolume.ebs(32, {volumeType: autoscaling.EbsDeviceVolumeType.GP2}),
             }]
         });
         asg.role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMManagedInstanceCore'))
@@ -93,10 +92,10 @@ systemctl status jenkins
             }
         });
 
-        new cdk.CfnOutput(this, 'asg-url', {
+        new cdk.CfnOutput(this, 'loadbalancer-url-output', {
             value: lb.loadBalancerDnsName,
-            description: 'Loadbalancer url', // Optional
-            exportName: 'lb-url', // Registers a CloudFormation export named "TheAwesomeBucket"
+            description: 'Loadbalancer url',
+            exportName: 'lb-url',
         });
     }
 }
